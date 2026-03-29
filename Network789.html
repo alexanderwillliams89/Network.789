@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamer Network Compass</title>
+    <style>
+        /* This section makes it look like a game UI */
+        body { background: #0b0b0e; color: #00ffcc; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .compass { position: relative; width: 250px; height: 250px; border-radius: 50%; border: 5px solid #1a1a2e; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #1a1a2e, #000); box-shadow: 0 0 20px #00ffcc33; }
+        .needle { position: absolute; width: 3px; height: 100px; background: #00ffcc; transform-origin: bottom center; bottom: 50%; transition: transform 0.1s ease-out; box-shadow: 0 0 10px #00ffcc; }
+        .dot { width: 12px; height: 12px; background: #00ffcc; border-radius: 50%; z-index: 5; box-shadow: 0 0 10px #00ffcc; }
+        .label { position: absolute; font-size: 12px; font-weight: bold; }
+        .w { top: 20px; color: #ff4d4d; } .m { right: 20px; color: #ffcc00; } .s { bottom: 20px; color: #00ff88; }
+        .display { margin-top: 30px; text-align: center; border: 1px solid #00ffcc55; padding: 15px; border-radius: 10px; min-width: 200px; }
+        #speed { font-size: 28px; font-weight: bold; display: block; }
+        #status { font-size: 14px; margin-top: 5px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+    <div class="compass">
+        <div class="label w">WEAK</div>
+        <div class="label m">MID</div>
+        <div class="label s">STRONG</div>
+        <div class="needle" id="needle"></div>
+        <div class="dot"></div>
+    </div>
+
+    <div class="display">
+        <span id="speed">0.0 Mbps</span>
+        <div id="status">Checking Signal...</div>
+    </div>
+
+    <script>
+        // This section makes the needle move and range
+        const needle = document.getElementById('needle');
+        const speedText = document.getElementById('speed');
+        const statusText = document.getElementById('status');
+
+        let targetMbps = 0;
+        let smoothSpeed = 0;
+
+        function getRealNetwork() {
+            const nav = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (nav) { targetMbps = nav.downlink; }
+        }
+
+        function animate() {
+            // Add jitter to make it "range" and look alive
+            let jitter = (Math.random() - 0.5) * 0.7;
+            let displaySpeed = Math.max(0.1, targetMbps + jitter);
+            
+            // Smooth the needle movement
+            smoothSpeed += (displaySpeed - smoothSpeed) * 0.1;
+            speedText.innerText = smoothSpeed.toFixed(1) + " Mbps";
+
+            // Rotate needle: 0 Mbps is -120deg, 10 Mbps is 0deg, 20 Mbps is 120deg
+            let rotation = (smoothSpeed * 12) - 120;
+            if (rotation > 120) rotation = 120;
+            needle.style.transform = `rotate(${rotation}deg)`;
+
+            // Update status text
+            if (smoothSpeed < 3) {
+                statusText.innerText = "Lag Warning";
+                statusText.style.color = "#ff4d4d";
+            } else if (smoothSpeed < 8) {
+                statusText.innerText = "Stable";
+                statusText.style.color = "#ffcc00";
+            } else {
+                statusText.innerText = "Pro Connection";
+                statusText.style.color = "#00ff88";
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        setInterval(getRealNetwork, 2000);
+        getRealNetwork();
+        animate();
+    </script>
+</body>
+</html>
